@@ -1,15 +1,16 @@
 export type Role = {
-  name: string
-  title: string
+  firstName: string
+  lastName: string
+  role: string
 }
 
 export const organizationData: Role[] = [
-  { name: "Jo-Anne Sinclair", title: "CEO / Chair of Board" },
-  { name: "Jackson Smith", title: "COO / VP Operations" },
-  { name: "Susan Thomas", title: "CFO / VP Administration" },
-  { name: "Richa Kaur", title: "VP Client Services" },
-  { name: "Josee Benjamin", title: "CIO" },
-  { name: "Vincent Grey", title: "VP Sales & Marketing" },
-  { name: "Sandra Bear", title: "Director Information Technology" },
-  { name: "Gus Blue", title: "Director Information Security & CISSO" },
+  { firstName: "Jo-Anne", lastName: "Sinclair", role: "CEO / Chair of Board" },
+  { firstName: "Jackson", lastName: "Smith", role: "COO / VP Operations" },
+  { firstName: "Susan", lastName: "Thomas", role: "CFO / VP Administration" },
+  { firstName: "Richa", lastName: "Kaur", role: "VP Client Services" },
+  { firstName: "Josee", lastName: "Benjamin", role: "CIO" },
+  { firstName: "Vincent", lastName: "Grey", role: "VP Sales & Marketing" },
+  { firstName: "Sandra", lastName: "Bear", role: "Director Information Technology" },
+  { firstName: "Gus", lastName: "Blue", role: "Director Information Security & CISSO" },
 ]
