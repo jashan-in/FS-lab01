@@ -1,64 +1,70 @@
 import { useState } from "react"
-import { useFormInput } from "../hooks/useFormInput"
-import { organizationService } from "../services/organizationService"
+import { organizationRepo } from "../repositories/organizationRepo"
+import { SignedIn, SignedOut, SignInButton } from "@clerk/clerk-react"
 
 type Props = {
-  setRoles: (roles: any[]) => void
+  setRoles: (roles: string[]) => void
 }
 
 export function OrganizationForm({ setRoles }: Props) {
-  const firstName = useFormInput("")
-  const lastName = useFormInput("")
-  const role = useFormInput("")
-  const [error, setError] = useState("")
+  const [roleName, setRoleName] = useState("")
+  const [formError, setFormError] = useState("")
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError("")
+    setFormError("")
 
-    const result = organizationService.createRole({
-      firstName: firstName.value,
-      lastName: lastName.value,
-      role: role.value
-    })
-
-    if (!result.success) {
-      setError(result.message)
+    if (!roleName || roleName.trim().length < 2) {
+      setFormError("Role name must be at least 2 characters")
       return
     }
 
-    setRoles(result.roles)
+    try {
+      // assuming backend POST /api/roles exists
+      const res = await fetch("http://localhost:3000/api/roles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name: roleName })
+      })
 
-    firstName.setValue("")
-    lastName.setValue("")
-    role.setValue("")
+      const data = await res.json()
+
+      // reload roles from backend
+      const roles = await organizationRepo.getDepartments()
+      setRoles(roles)
+
+      setRoleName("")
+    } catch (error: any) {
+      setFormError(error.message)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h3>Add Role</h3>
+    <>
+      <SignedOut>
+        <p>
+          Please <SignInButton mode="modal">login</SignInButton> to add roles
+        </p>
+      </SignedOut>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <SignedIn>
+        <form onSubmit={handleSubmit}>
+          <h3>Add Role</h3>
 
-      <input
-        placeholder="First Name"
-        value={firstName.value}
-        onChange={firstName.onChange}
-      />
+          {formError && <p style={{ color: "red" }}>{formError}</p>}
 
-      <input
-        placeholder="Last Name"
-        value={lastName.value}
-        onChange={lastName.onChange}
-      />
+          <input
+            type="text"
+            placeholder="Role Name"
+            value={roleName}
+            onChange={(e) => setRoleName(e.target.value)}
+          />
 
-      <input
-        placeholder="Role"
-        value={role.value}
-        onChange={role.onChange}
-      />
-
-      <button type="submit">Add Role</button>
-    </form>
+          <button type="submit">Add Role</button>
+        </form>
+      </SignedIn>
+    </>
   )
 }

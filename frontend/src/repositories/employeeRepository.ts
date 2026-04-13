@@ -5,8 +5,9 @@ export const employeeRepository = {
   },
 
   async getDepartments() {
-    const res = await fetch("http://localhost:3000/api/employees/departments")
-    return res.json()
+    const res = await fetch("http://localhost:3000/api/roles")
+    const roles = await res.json()
+    return roles.map((r: any) => r.name)
   },
 
   async createEmployee(employee: {
