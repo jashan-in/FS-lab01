@@ -1,18 +1,9 @@
-import { organizationData } from "../data/organization"
-
-let roles = [...organizationData]
-
 export const organizationRepo = {
-  getRoles() {
-    return roles
-  },
+  async getDepartments() {
+    const res = await fetch("http://localhost:3000/api/roles")
+    const roles = await res.json()
 
-  createRole(role: {
-    firstName: string
-    lastName: string
-    role: string
-  }) {
-    roles = [...roles, role]
-    return roles
+    // FIX: convert objects → string array
+    return roles.map((r: any) => r.name)
   }
 }

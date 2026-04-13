@@ -1,15 +1,15 @@
 import { employeeRepository } from "../repositories/employeeRepository"
 
 export const employeeService = {
-  getEmployees() {
-    return employeeRepository.getEmployees()
+  async getEmployees() {
+    return await employeeRepository.getEmployees()
   },
 
-  getDepartments() {
-    return employeeRepository.getDepartments()
+  async getDepartments() {
+    return await employeeRepository.getDepartments()
   },
 
-  createEmployee(data: {
+  async createEmployee(data: {
     firstName: string
     lastName: string
     department: string
@@ -27,6 +27,6 @@ export const employeeService = {
       throw new Error("Department is required.")
     }
 
-    return employeeRepository.createEmployee(data)
+    return await employeeRepository.createEmployee(data)
   }
 }
