@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useFormInput } from "../hooks/useFormInput"
 import { employeeRepository } from "../repositories/employeeRepository"
+import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/clerk-react"
 
 type Props = {
   setEmployees: (employees: any[]) => void
@@ -13,6 +14,8 @@ export function EmployeeForm({ setEmployees }: Props) {
   const [formError, setFormError] = useState("")
   const [departments, setDepartments] = useState<string[]>([])
 
+  const { getToken } = useAuth()
+
   useEffect(() => {
     employeeRepository.getDepartments().then(setDepartments)
   }, [])
@@ -22,12 +25,27 @@ export function EmployeeForm({ setEmployees }: Props) {
     setFormError("")
 
     try {
-      const employees = await employeeRepository.createEmployee({
-        firstName: firstName.value,
-        lastName: lastName.value,
-        department: department.value
+      const token = await getToken()
+
+      const res = await fetch("http://localhost:3000/api/employees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          firstName: firstName.value,
+          lastName: lastName.value,
+          department: department.value
+        })
       })
 
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text)
+      }
+
+      const employees = await res.json()
       setEmployees(employees)
 
       firstName.setValue("")
@@ -39,38 +57,45 @@ export function EmployeeForm({ setEmployees }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h3>Add Employee</h3>
+    <>
+      <SignedOut>
+        <p>
+          Please <SignInButton mode="modal">login</SignInButton> to add employees
+        </p>
+      </SignedOut>
 
-      {formError && <p style={{ color: "red" }}>{formError}</p>}
+      <SignedIn>
+        <form onSubmit={handleSubmit}>
+          <h3>Add Employee</h3>
 
-      <input
-        type="text"
-        placeholder="First Name"
-        value={firstName.value}
-        onChange={firstName.onChange}
-      />
+          {formError && <p style={{ color: "red" }}>{formError}</p>}
 
-      <input
-        type="text"
-        placeholder="Last Name"
-        value={lastName.value}
-        onChange={lastName.onChange}
-      />
+          <input
+            type="text"
+            placeholder="First Name"
+            value={firstName.value}
+            onChange={firstName.onChange}
+          />
 
-      <select
-        value={department.value}
-        onChange={department.onChange}
-      >
-        <option value="">Select Department</option>
-        {departments.map(dep => (
-          <option key={dep} value={dep}>
-            {dep}
-          </option>
-        ))}
-      </select>
+          <input
+            type="text"
+            placeholder="Last Name"
+            value={lastName.value}
+            onChange={lastName.onChange}
+          />
 
-      <button type="submit">Add Employee</button>
-    </form>
+          <select value={department.value} onChange={department.onChange}>
+            <option value="">Select Department</option>
+            {departments.map(dep => (
+              <option key={dep} value={dep}>
+                {dep}
+              </option>
+            ))}
+          </select>
+
+          <button type="submit">Add Employee</button>
+        </form>
+      </SignedIn>
+    </>
   )
 }
