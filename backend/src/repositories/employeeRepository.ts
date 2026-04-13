@@ -1,22 +1,40 @@
-import { employeesData } from "../data/employees"
+import { PrismaClient } from "@prisma/client"
 
-let employees = [...employeesData]
+const prisma = new PrismaClient()
 
 export const employeeRepository = {
-  getEmployees() {
-    return employees
+  async getEmployees() {
+    return prisma.employee.findMany({
+      include: { role: true }
+    })
   },
 
-  getDepartments() {
-    return [...new Set(employees.map(e => e.department))]
-  },
-
-  createEmployee(employee: {
+  async createEmployee(data: {
     firstName: string
     lastName: string
     department: string
   }) {
-    employees = [...employees, employee]
-    return employees
+    const role = await prisma.role.findFirst({
+      where: { name: data.department }
+    })
+
+    if (!role) throw new Error("Invalid department")
+
+    const employee = await prisma.employee.create({
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        roleId: role.id
+      }
+    })
+
+    return prisma.employee.findMany({
+      include: { role: true }
+    })
+  },
+
+  async getDepartments() {
+    const roles = await prisma.role.findMany()
+    return roles.map(r => r.name)
   }
 }

@@ -1,18 +1,9 @@
-import { organizationData } from "../data/organization"
+import { PrismaClient } from "@prisma/client"
 
-let roles = [...organizationData]
+const prisma = new PrismaClient()
 
-export const organizationRepo = {
-  getRoles() {
-    return roles
-  },
-
-  createRole(role: {
-    firstName: string
-    lastName: string
-    role: string
-  }) {
-    roles = [...roles, role]
-    return roles
+export const organizationRepository = {
+  async getRoles() {
+    return prisma.role.findMany()
   }
 }
