@@ -2,12 +2,9 @@ import { useState, useEffect } from "react"
 import { useFormInput } from "../hooks/useFormInput"
 import { employeeRepository } from "../repositories/employeeRepository"
 import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/clerk-react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-type Props = {
-  setEmployees: (employees: any[]) => void
-}
-
-export function EmployeeForm({ setEmployees }: Props) {
+export function EmployeeForm() {
   const firstName = useFormInput("")
   const lastName = useFormInput("")
   const department = useFormInput("")
@@ -15,16 +12,18 @@ export function EmployeeForm({ setEmployees }: Props) {
   const [departments, setDepartments] = useState<string[]>([])
 
   const { getToken } = useAuth()
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     employeeRepository.getDepartments().then(setDepartments)
   }, [])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setFormError("")
-
-    try {
+  const mutation = useMutation({
+    mutationFn: async (data: {
+      firstName: string
+      lastName: string
+      department: string
+    }) => {
       const token = await getToken()
 
       const res = await fetch("http://localhost:3000/api/employees", {
@@ -33,11 +32,7 @@ export function EmployeeForm({ setEmployees }: Props) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({
-          firstName: firstName.value,
-          lastName: lastName.value,
-          department: department.value
-        })
+        body: JSON.stringify(data)
       })
 
       if (!res.ok) {
@@ -45,15 +40,36 @@ export function EmployeeForm({ setEmployees }: Props) {
         throw new Error(text)
       }
 
-      const employees = await res.json()
-      setEmployees(employees)
+      return res.json()
+    },
 
-      firstName.setValue("")
-      lastName.setValue("")
-      department.setValue("")
-    } catch (error: any) {
-      setFormError(error.message)
+    onSuccess: () => {
+      // replaces setEmployees
+      queryClient.invalidateQueries({ queryKey: ["employees"] })
     }
+  })
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setFormError("")
+
+    mutation.mutate(
+      {
+        firstName: firstName.value,
+        lastName: lastName.value,
+        department: department.value
+      },
+      {
+        onSuccess: () => {
+          firstName.setValue("")
+          lastName.setValue("")
+          department.setValue("")
+        },
+        onError: (error: any) => {
+          setFormError(error.message)
+        }
+      }
+    )
   }
 
   return (
